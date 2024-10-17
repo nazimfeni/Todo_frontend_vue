@@ -1,33 +1,26 @@
 <script setup>
 import { ref, onMounted } from "vue";
-import axios from "axios";
+import { fetchTasks, addTask, toggleCompletion, removeTask } from "@/services/TaskService";
 
 const newTask = ref("");
 const tasks = ref([]);
 
 // Fetch tasks from API
-const fetchTasks = async () => {
+const loadTasks = async () => {
   try {
-    const response = await axios.get("http://localhost:8000/api/tasks");
-    tasks.value = response.data;
+    tasks.value = await fetchTasks();
   } catch (error) {
     console.error("Error fetching tasks:", error);
   }
 };
 
-// Add a new task and update tasks list
-const addTask = async () => {
+// Add a new task
+const handleAddTask = async () => {
   if (newTask.value.trim() !== "") {
     try {
-      const response = await axios.post("http://localhost:8000/api/tasks", {
-        task: newTask.value,
-      });
-
-      if (response.data && response.data.task) {
-        tasks.value = [...tasks.value, response.data.task];
-      }
-
-      newTask.value = "";
+      const task = await addTask(newTask.value);
+      tasks.value.push(task);
+      newTask.value = ""; // Clear input field
     } catch (error) {
       console.error("Error adding task:", error);
     }
@@ -35,50 +28,45 @@ const addTask = async () => {
     alert("Please enter a valid task.");
   }
 
-  fetchTasks();
+  loadTasks();
 };
 
 // Mark a task as completed or not
-const toggleCompletion = async (task) => {
+const handleToggleCompletion = async (task) => {
   try {
-    const response = await axios.post(`http://localhost:8000/api/tasks/${task.id}/complete`);
-    const updatedTask = response.data;
-
-    // Update the local tasks array
+    const updatedTask = await toggleCompletion(task.id);
     const index = tasks.value.findIndex(t => t.id === updatedTask.id);
     if (index !== -1) {
-      tasks.value[index].completed = updatedTask.completed; // Update the completion status
+      tasks.value[index].completed = updatedTask.completed;
     }
   } catch (error) {
     console.error("Error toggling task completion:", error);
   }
 };
 
-const removeTask = async (taskId) => {
+// Remove a task
+const handleRemoveTask = async (taskId) => {
   try {
-    // Send a DELETE request to remove the task
-    await axios.delete(`http://localhost:8000/api/tasks/${taskId}`);
-
-    // Remove the task from the local tasks array
-    tasks.value = tasks.value.filter((task) => task.id !== taskId);
+    await removeTask(taskId);
+    tasks.value = tasks.value.filter(task => task.id !== taskId);
   } catch (error) {
     console.error("Error removing task:", error);
   }
 };
 
-
-onMounted(fetchTasks); // Fetch tasks when component is mounted
+onMounted(loadTasks); // Fetch tasks when component is mounted
 </script>
+
 <template>
   <div class="todo-app">
     <h1>To Do List</h1>
     <div class="task-input">
       <input
         v-model="newTask"
-        @keyup.enter="addTask"
+        @keyup.enter="handleAddTask"
         placeholder="Add a new task"
       />
-      <button @click="addTask">Add Task</button>
+      <button @click="handleAddTask">Add Task</button>
     </div>
     <table>
       <thead>
@@ -94,13 +82,13 @@ onMounted(fetchTasks); // Fetch tasks when component is mounted
             <input
               type="checkbox"
               v-model="task.completed"
-              @change="toggleCompletion(task)"
+              @change="handleToggleCompletion(task)"
             />
             <span :class="{ completed: task.completed }">{{ task.task }}</span>
           </td>
           <td>{{ task.completed ? 'Yes' : 'No' }}</td>
           <td>
-            <button @click="removeTask(task.id)" class="remove-button">Remove</button>
+            <button @click="handleRemoveTask(task.id)" class="remove-button">Remove</button>
           </td>
         </tr>
       </tbody>
@@ -121,13 +109,6 @@ onMounted(fetchTasks); // Fetch tasks when component is mounted
   border: 1px solid #ccc;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.app-title {
-  font-size: 24px;
-  margin-bottom: 20px;
-  text-align: center;
-  color: #333;
 }
 
 .task-input {
@@ -155,35 +136,6 @@ button:hover {
   background-color: #45a049;
 }
 
-.task-list {
-  list-style: none;
-  padding: 0;
-}
-
-.task-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px;
-  margin: 8px 0;
-  background-color: #f9f9f9;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-}
-
-.remove-button {
-  padding: 6px 10px;
-  font-size: 12px;
-  background-color: #e74c3c;
-  color: #fff;
-  border: none;
-  border-radius: 3px;
-  cursor: pointer;
-}
-
-.remove-button:hover {
-  background-color: #c0392b;
-}
 table {
   width: 100%;
   border-collapse: collapse;
@@ -200,4 +152,17 @@ th {
   background-color: #f2f2f2;
 }
 
+.remove-button {
+  padding: 6px 10px;
+  font-size: 12px;
+  background-color: #e74c3c;
+  color: #fff;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.remove-button:hover {
+  background-color: #c0392b;
+}
 </style>
