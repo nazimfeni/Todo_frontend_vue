@@ -1,11 +1,6 @@
 <script setup>
 import { ref, onMounted } from "vue";
-import {
-  fetchTasks,
-  addTask,
-  toggleCompletion,
-  removeTask,
-} from "@/services/TaskService";
+import { fetchTasks, addTask, toggleCompletion, removeTask } from "@/services/TaskService";
 
 const newTask = ref("");
 const tasks = ref([]);
@@ -38,7 +33,7 @@ const handleAddTask = async () => {
 const handleToggleCompletion = async (task) => {
   try {
     const updatedTask = await toggleCompletion(task.id);
-    const index = tasks.value.findIndex((t) => t.id === updatedTask.id);
+    const index = tasks.value.findIndex(t => t.id === updatedTask.id);
     if (index !== -1) {
       tasks.value[index].completed = updatedTask.completed;
     }
@@ -51,7 +46,7 @@ const handleToggleCompletion = async (task) => {
 const handleRemoveTask = async (taskId) => {
   try {
     await removeTask(taskId);
-    tasks.value = tasks.value.filter((task) => task.id !== taskId);
+    tasks.value = tasks.value.filter(task => task.id !== taskId);
   } catch (error) {
     console.error("Error removing task:", error);
   }
@@ -89,11 +84,9 @@ onMounted(loadTasks); // Fetch tasks when component is mounted
             />
             <span :class="{ completed: task.completed }">{{ task.task }}</span>
           </td>
-          <td>{{ task.completed ? "Yes" : "No" }}</td>
+          <td>{{ task.completed ? 'Yes' : 'No' }}</td>
           <td>
-            <button @click="handleRemoveTask(task.id)" class="remove-button">
-              Remove
-            </button>
+            <button @click="handleRemoveTask(task.id)" class="remove-button">Remove</button>
           </td>
         </tr>
       </tbody>
@@ -147,8 +140,7 @@ table {
   margin-top: 20px;
 }
 
-th,
-td {
+th, td {
   border: 1px solid #ccc;
   padding: 10px;
   text-align: left;
