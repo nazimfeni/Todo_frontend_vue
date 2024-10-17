@@ -27,6 +27,8 @@ const handleAddTask = async () => {
   } else {
     alert("Please enter a valid task.");
   }
+
+  loadTasks();
 };
 
 // Mark a task as completed or not
